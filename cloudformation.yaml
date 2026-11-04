@@ -1,0 +1,330 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  AWS CloudFormation Template: Serverless Resume REST API
+  Deploys API Gateway with API Key and Usage Plan (Rate Limiting & Quota),
+  Lambda function with IAM roles, and DynamoDB table with composite PK/SK.
+
+Parameters:
+  StageName:
+    Type: String
+    Default: prod
+    Description: Deployment stage name (prod, dev, staging)
+
+  ThrottleRateLimit:
+    Type: Number
+    Default: 10
+    Description: Steady-state request rate limit (requests per second)
+
+  ThrottleBurstLimit:
+    Type: Number
+    Default: 20
+    Description: Burst request rate limit
+
+  QuotaLimit:
+    Type: Number
+    Default: 1000
+    Description: Daily quota limit for API key
+
+  S3Bucket:
+    Type: String
+    Description: S3 bucket containing the packaged lambda zip (used when deploying via standard CloudFormation)
+    Default: ""
+
+  S3Key:
+    Type: String
+    Description: S3 object key of the lambda zip artifact
+    Default: ""
+
+Conditions:
+  HasS3Source: !Not [!Equals [!Ref S3Bucket, ""]]
+
+Resources:
+  # ============================================================================
+  # DynamoDB Table
+  # ============================================================================
+  ResumeDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "ResumeTable-${AWS::StackName}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      SSESpecification:
+        SSEEnabled: true
+
+  # ============================================================================
+  # IAM Execution Role for Lambda
+  # ============================================================================
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-LambdaRole"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:BatchWriteItem
+                Resource: !GetAtt ResumeDynamoDBTable.Arn
+
+  # ============================================================================
+  # AWS Lambda Function
+  # ============================================================================
+  ResumeLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-ResumeHandler"
+      Runtime: python3.12
+      Handler: app.lambda_handler
+      MemorySize: 256
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        !If
+          - HasS3Source
+          - S3Bucket: !Ref S3Bucket
+            S3Key: !Ref S3Key
+          - ZipFile: |
+              # Embedded fallback handler when deployed directly without S3 package
+              import json
+              def lambda_handler(event, context):
+                  return {
+                      "statusCode": 200,
+                      "headers": {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
+                      "body": json.dumps({"message": "Serverless Resume API deployed. Please upload package zip."})
+                  }
+      Environment:
+        Variables:
+          RESUME_TABLE_NAME: !Ref ResumeDynamoDBTable
+
+  # ============================================================================
+  # Amazon API Gateway REST API
+  # ============================================================================
+  ResumeRestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub "${AWS::StackName}-RestApi"
+      Description: REST API for serving professional resume sections
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  # API Resources
+  ResumeResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ResumeRestApi.RootResourceId
+      PathPart: resume
+      RestApiId: !Ref ResumeRestApi
+
+  PersonalResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ResumeRestApi.RootResourceId
+      PathPart: personal
+      RestApiId: !Ref ResumeRestApi
+
+  ExperienceResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ResumeRestApi.RootResourceId
+      PathPart: experience
+      RestApiId: !Ref ResumeRestApi
+
+  EducationResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ResumeRestApi.RootResourceId
+      PathPart: education
+      RestApiId: !Ref ResumeRestApi
+
+  SkillsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ResumeRestApi.RootResourceId
+      PathPart: skills
+      RestApiId: !Ref ResumeRestApi
+
+  HealthResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ResumeRestApi.RootResourceId
+      PathPart: health
+      RestApiId: !Ref ResumeRestApi
+
+  # Methods with ApiKeyRequired: true
+  GetPersonalMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ResumeRestApi
+      ResourceId: !Ref PersonalResource
+      HttpMethod: GET
+      ApiKeyRequired: true
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ResumeLambdaFunction.Arn}/invocations"
+
+  GetExperienceMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ResumeRestApi
+      ResourceId: !Ref ExperienceResource
+      HttpMethod: GET
+      ApiKeyRequired: true
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ResumeLambdaFunction.Arn}/invocations"
+
+  GetEducationMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ResumeRestApi
+      ResourceId: !Ref EducationResource
+      HttpMethod: GET
+      ApiKeyRequired: true
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ResumeLambdaFunction.Arn}/invocations"
+
+  GetSkillsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ResumeRestApi
+      ResourceId: !Ref SkillsResource
+      HttpMethod: GET
+      ApiKeyRequired: true
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ResumeLambdaFunction.Arn}/invocations"
+
+  GetResumeMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ResumeRestApi
+      ResourceId: !Ref ResumeResource
+      HttpMethod: GET
+      ApiKeyRequired: true
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ResumeLambdaFunction.Arn}/invocations"
+
+  GetHealthMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ResumeRestApi
+      ResourceId: !Ref HealthResource
+      HttpMethod: GET
+      ApiKeyRequired: false
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ResumeLambdaFunction.Arn}/invocations"
+
+  # API Deployment & Stage
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - GetPersonalMethod
+      - GetExperienceMethod
+      - GetEducationMethod
+      - GetSkillsMethod
+      - GetResumeMethod
+      - GetHealthMethod
+    Properties:
+      RestApiId: !Ref ResumeRestApi
+
+  ApiStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      StageName: !Ref StageName
+      RestApiId: !Ref ResumeRestApi
+      DeploymentId: !Ref ApiDeployment
+
+  # API Key & Usage Plan
+  ResumeApiKey:
+    Type: AWS::ApiGateway::ApiKey
+    DependsOn: ApiStage
+    Properties:
+      Name: !Sub "${AWS::StackName}-ApiKey"
+      Description: API Key for Resume API Access
+      Enabled: true
+      StageKeys:
+        - RestApiId: !Ref ResumeRestApi
+          StageName: !Ref StageName
+
+  ResumeUsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    DependsOn: ApiStage
+    Properties:
+      UsagePlanName: !Sub "${AWS::StackName}-UsagePlan"
+      Description: Usage plan with rate throttling and daily quota
+      ApiStages:
+        - ApiId: !Ref ResumeRestApi
+          Stage: !Ref StageName
+      Throttle:
+        RateLimit: !Ref ThrottleRateLimit
+        BurstLimit: !Ref ThrottleBurstLimit
+      Quota:
+        Limit: !Ref QuotaLimit
+        Period: DAY
+
+  ResumeUsagePlanKey:
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties:
+      KeyId: !Ref ResumeApiKey
+      KeyType: API_KEY
+      UsagePlanId: !Ref ResumeUsagePlan
+
+  # Lambda Permissions
+  LambdaApiGatewayPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt ResumeLambdaFunction.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ResumeRestApi}/*/*"
+
+Outputs:
+  ApiBaseUrl:
+    Description: Base URL for Resume API
+    Value: !Sub "https://${ResumeRestApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/"
+  ApiKeyId:
+    Description: API Key Resource ID
+    Value: !Ref ResumeApiKey
+  DynamoDBTable:
+    Description: DynamoDB Table Name
+    Value: !Ref ResumeDynamoDBTable

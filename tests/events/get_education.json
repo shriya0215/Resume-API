@@ -1,0 +1,14 @@
+{
+  "resource": "/education",
+  "path": "/education",
+  "httpMethod": "GET",
+  "headers": {
+    "Accept": "application/json",
+    "x-api-key": "test-mock-api-key"
+  },
+  "queryStringParameters": null,
+  "requestContext": {
+    "stage": "prod",
+    "identity": {"apiKey": "test-mock-api-key"}
+  }
+}

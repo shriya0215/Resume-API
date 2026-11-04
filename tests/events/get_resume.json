@@ -1,0 +1,32 @@
+{
+  "resource": "/resume",
+  "path": "/resume",
+  "httpMethod": "GET",
+  "headers": {
+    "Accept": "application/json",
+    "x-api-key": "test-mock-api-key"
+  },
+  "queryStringParameters": null,
+  "pathParameters": null,
+  "stageVariables": null,
+  "requestContext": {
+    "resourceId": "123456",
+    "resourcePath": "/resume",
+    "httpMethod": "GET",
+    "extendedRequestId": "c6FnKGSMicAFeXA=",
+    "requestTime": "04/Nov/2026:12:00:00 +0000",
+    "path": "/prod/resume",
+    "accountId": "123456789012",
+    "protocol": "HTTP/1.1",
+    "stage": "prod",
+    "domainPrefix": "7w8xyz",
+    "requestTimeEpoch": 1793793600000,
+    "requestId": "c6FnKGSMicAFeXA=",
+    "identity": {
+      "apiKey": "test-mock-api-key",
+      "sourceIp": "127.0.0.1"
+    }
+  },
+  "body": null,
+  "isBase64Encoded": false
+}

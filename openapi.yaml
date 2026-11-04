@@ -1,0 +1,312 @@
+openapi: 3.0.3
+info:
+  title: Serverless Resume REST API
+  description: >
+    Production-grade serverless REST API deployed on AWS serving professional resume
+    data. Built with Amazon API Gateway, AWS Lambda (Python), and Amazon DynamoDB.
+    Protected by API Key authentication and rate-limited via AWS API Gateway Usage Plans.
+  version: 1.0.0
+  contact:
+    name: Alex Mercer
+    email: alex.mercer@example.com
+    url: https://alexmercer.dev
+
+servers:
+  - url: https://{apiId}.execute-api.{region}.amazonaws.com/prod
+    description: Production API Gateway Endpoint
+    variables:
+      apiId:
+        default: your-api-id
+      region:
+        default: us-east-1
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /:
+    get:
+      summary: Retrieve complete resume
+      description: Returns the entire resume including personal details, experience, education, skills, certifications, and projects.
+      responses:
+        '200':
+          description: Full resume JSON payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumeResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /resume:
+    get:
+      summary: Alias for full resume
+      description: Same as root `/` path.
+      responses:
+        '200':
+          description: Full resume JSON payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumeResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /personal:
+    get:
+      summary: Retrieve personal details
+      description: Returns personal contact information, location, bio summary, and social links.
+      responses:
+        '200':
+          description: Personal information object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonalInfo'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /experience:
+    get:
+      summary: Retrieve work experience
+      description: Returns list of past and present professional roles, achievements, and tech stacks.
+      responses:
+        '200':
+          description: List of work experience entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExperienceItem'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /education:
+    get:
+      summary: Retrieve education history
+      description: Returns list of degrees, universities, graduation dates, honors, and coursework.
+      responses:
+        '200':
+          description: List of education entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EducationItem'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /skills:
+    get:
+      summary: Retrieve skills categories
+      description: Returns technical proficiencies categorized by Cloud, Languages, Databases, DevOps, etc.
+      responses:
+        '200':
+          description: Categorized technical skills
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Skills'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /health:
+    get:
+      summary: Service health check
+      security: []
+      description: Unauthenticated endpoint to verify service operational health and database connectivity.
+      responses:
+        '200':
+          description: Health check report
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: HEALTHY
+                  service:
+                    type: string
+                    example: Serverless Resume API
+                  version:
+                    type: string
+                    example: 1.0.0
+                  dynamodb_configured:
+                    type: boolean
+                    example: true
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: API Key generated in API Gateway associated with the rate-limiting Usage Plan.
+
+  responses:
+    Forbidden:
+      description: Missing or invalid API Key
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Forbidden
+    NotFound:
+      description: Requested section or endpoint not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  code:
+                    type: string
+    TooManyRequests:
+      description: Rate limit or daily quota exceeded
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Limit Exceeded
+
+  schemas:
+    PersonalInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        title:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        location:
+          type: string
+        website:
+          type: string
+        linkedin:
+          type: string
+        github:
+          type: string
+        summary:
+          type: string
+
+    ExperienceItem:
+      type: object
+      properties:
+        id:
+          type: string
+        company:
+          type: string
+        role:
+          type: string
+        location:
+          type: string
+        startDate:
+          type: string
+        endDate:
+          type: string
+        current:
+          type: boolean
+        summary:
+          type: string
+        achievements:
+          type: array
+          items:
+            type: string
+        technologies:
+          type: array
+          items:
+            type: string
+
+    EducationItem:
+      type: object
+      properties:
+        id:
+          type: string
+        institution:
+          type: string
+        degree:
+          type: string
+        location:
+          type: string
+        startDate:
+          type: string
+        endDate:
+          type: string
+        gpa:
+          type: string
+        honors:
+          type: string
+        relevantCourses:
+          type: array
+          items:
+            type: string
+
+    Skills:
+      type: object
+      properties:
+        cloudAndServerless:
+          type: array
+          items:
+            type: string
+        programmingLanguages:
+          type: array
+          items:
+            type: string
+        databasesAndStorage:
+          type: array
+          items:
+            type: string
+        devopsAndIaC:
+          type: array
+          items:
+            type: string
+        architectureAndPatterns:
+          type: array
+          items:
+            type: string
+
+    ResumeResponse:
+      type: object
+      properties:
+        personal:
+          $ref: '#/components/schemas/PersonalInfo'
+        experience:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperienceItem'
+        education:
+          type: array
+          items:
+            $ref: '#/components/schemas/EducationItem'
+        skills:
+          $ref: '#/components/schemas/Skills'

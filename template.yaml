@@ -1,0 +1,230 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Serverless Resume API on AWS
+  Deploy a secure, throttled, production-ready REST API using Amazon API Gateway,
+  AWS Lambda (Python 3.12), and Amazon DynamoDB, automated with AWS SAM.
+
+Parameters:
+  StageName:
+    Type: String
+    Default: prod
+    Description: Environment stage for API Gateway deployment (e.g. dev, staging, prod)
+
+  ThrottleRateLimit:
+    Type: Number
+    Default: 10
+    Description: Max steady-state requests per second permitted by usage plan
+
+  ThrottleBurstLimit:
+    Type: Number
+    Default: 20
+    Description: Max concurrent burst requests permitted by usage plan
+
+  QuotaLimit:
+    Type: Number
+    Default: 1000
+    Description: Max requests allowed per day under the usage plan
+
+Globals:
+  Function:
+    Timeout: 10
+    MemorySize: 256
+    Runtime: python3.12
+    Architectures:
+      - arm64
+    Environment:
+      Variables:
+        RESUME_TABLE_NAME: !Ref ResumeTable
+        LOG_LEVEL: INFO
+
+Resources:
+  # ============================================================================
+  # Amazon DynamoDB Table
+  # ============================================================================
+  ResumeTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "ResumeTable-${AWS::StackName}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      SSESpecification:
+        SSEEnabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: Application
+          Value: ServerlessResumeAPI
+        - Key: Environment
+          Value: !Ref StageName
+
+  # ============================================================================
+  # Amazon API Gateway REST API
+  # ============================================================================
+  ResumeApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref StageName
+      Cors:
+        AllowMethods: "'GET,OPTIONS,HEAD'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: "'*'"
+      Auth:
+        ApiKeyRequired: true
+        UsagePlan:
+          CreateUsagePlan: PER_API
+          UsagePlanName: !Sub "${AWS::StackName}-UsagePlan"
+          Description: Usage plan with rate throttling and daily quota
+          Quota:
+            Limit: !Ref QuotaLimit
+            Period: DAY
+          Throttle:
+            RateLimit: !Ref ThrottleRateLimit
+            BurstLimit: !Ref ThrottleBurstLimit
+
+  # ============================================================================
+  # API Key for Authentication
+  # ============================================================================
+  ResumeApiKey:
+    Type: AWS::ApiGateway::ApiKey
+    DependsOn:
+      - ResumeApiprodStage
+    Properties:
+      Name: !Sub "${AWS::StackName}-ApiKey"
+      Description: API Key for accessing the Serverless Resume REST API
+      Enabled: true
+      StageKeys:
+        - RestApiId: !Ref ResumeApi
+          StageName: !Ref StageName
+
+  # ============================================================================
+  # Associate API Key with Usage Plan
+  # ============================================================================
+  ResumeUsagePlanKey:
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties:
+      KeyId: !Ref ResumeApiKey
+      KeyType: API_KEY
+      UsagePlanId: !Ref ResumeApi.UsagePlan
+
+  # ============================================================================
+  # AWS Lambda Function (Backend Logic)
+  # ============================================================================
+  ResumeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-Handler"
+      CodeUri: src/
+      Handler: app.lambda_handler
+      Description: Dispatches resume endpoints and reads from DynamoDB / local JSON
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ResumeTable
+      Events:
+        RootEndpoint:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ResumeApi
+            Path: /
+            Method: GET
+            Auth:
+              ApiKeyRequired: true
+        ResumeEndpoint:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ResumeApi
+            Path: /resume
+            Method: GET
+            Auth:
+              ApiKeyRequired: true
+        PersonalEndpoint:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ResumeApi
+            Path: /personal
+            Method: GET
+            Auth:
+              ApiKeyRequired: true
+        ExperienceEndpoint:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ResumeApi
+            Path: /experience
+            Method: GET
+            Auth:
+              ApiKeyRequired: true
+        EducationEndpoint:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ResumeApi
+            Path: /education
+            Method: GET
+            Auth:
+              ApiKeyRequired: true
+        SkillsEndpoint:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ResumeApi
+            Path: /skills
+            Method: GET
+            Auth:
+              ApiKeyRequired: true
+        CertificationsEndpoint:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ResumeApi
+            Path: /certifications
+            Method: GET
+            Auth:
+              ApiKeyRequired: true
+        ProjectsEndpoint:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ResumeApi
+            Path: /projects
+            Method: GET
+            Auth:
+              ApiKeyRequired: true
+        HealthCheckEndpoint:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ResumeApi
+            Path: /health
+            Method: GET
+            Auth:
+              ApiKeyRequired: false
+
+Outputs:
+  ApiUrl:
+    Description: Base URL for the Resume API
+    Value: !Sub "https://${ResumeApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/"
+  PersonalEndpointUrl:
+    Description: URL to retrieve personal information
+    Value: !Sub "https://${ResumeApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/personal"
+  ExperienceEndpointUrl:
+    Description: URL to retrieve work experience
+    Value: !Sub "https://${ResumeApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/experience"
+  EducationEndpointUrl:
+    Description: URL to retrieve education history
+    Value: !Sub "https://${ResumeApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/education"
+  SkillsEndpointUrl:
+    Description: URL to retrieve skills
+    Value: !Sub "https://${ResumeApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/skills"
+  HealthEndpointUrl:
+    Description: Public health check endpoint URL (No API key required)
+    Value: !Sub "https://${ResumeApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/health"
+  DynamoDBTableName:
+    Description: DynamoDB Table Name
+    Value: !Ref ResumeTable
+  ApiKeyId:
+    Description: ID of generated API Key. Fetch secret value with `aws apigateway get-api-key --api-key <ApiKeyId> --include-value`
+    Value: !Ref ResumeApiKey

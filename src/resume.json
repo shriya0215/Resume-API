@@ -1,0 +1,156 @@
+{
+  "personal": {
+    "name": "Alex Mercer",
+    "title": "Senior Cloud & Serverless Software Engineer",
+    "email": "alex.mercer@example.com",
+    "phone": "+1 (555) 019-2834",
+    "location": "San Francisco, CA, USA",
+    "website": "https://alexmercer.dev",
+    "linkedin": "https://linkedin.com/in/alex-mercer-cloud",
+    "github": "https://github.com/alex-mercer",
+    "summary": "Results-driven Cloud Engineer with 6+ years of experience designing and deploying scalable, secure, and cost-efficient serverless architectures on AWS. Expert in AWS Lambda, Amazon API Gateway, DynamoDB, Python, TypeScript, and Infrastructure as Code (AWS SAM, CloudFormation, Terraform). Proven track record of optimizing distributed systems and migrating monolithic applications to event-driven microservices."
+  },
+  "experience": [
+    {
+      "id": "exp-1",
+      "company": "CloudScale Solutions",
+      "role": "Senior Serverless Cloud Engineer",
+      "location": "San Francisco, CA",
+      "startDate": "2023-01",
+      "endDate": "Present",
+      "current": true,
+      "summary": "Lead architect for multi-tenant serverless APIs handling over 40M daily requests with 99.99% availability.",
+      "achievements": [
+        "Architected and deployed a multi-region serverless REST API using AWS API Gateway, Lambda, and DynamoDB Global Tables.",
+        "Reduced cloud infrastructure costs by 42% through fine-tuned Lambda provisioned concurrency, memory optimization, and DynamoDB on-demand capacity planning.",
+        "Implemented rigorous API key security, usage plans, rate limiting, and WAF integration across all public endpoints.",
+        "Automated continuous integration and deployment pipelines using AWS CodePipeline and GitHub Actions with 100% IaC coverage."
+      ],
+      "technologies": ["AWS Lambda", "API Gateway", "DynamoDB", "Python", "Node.js", "AWS SAM", "CloudWatch", "Docker"]
+    },
+    {
+      "id": "exp-2",
+      "company": "Nexus FinTech Labs",
+      "role": "Cloud Software Engineer",
+      "location": "Austin, TX",
+      "startDate": "2020-06",
+      "endDate": "2022-12",
+      "current": false,
+      "summary": "Designed event-driven backend services and transaction pipelines complying with PCI-DSS standards.",
+      "achievements": [
+        "Migrated legacy REST services to serverless microservices powered by AWS Lambda and Amazon EventBridge, slashing latency by 35%.",
+        "Modeled DynamoDB single-table schema with composite partition/sort keys to support high-throughput sub-millisecond lookups.",
+        "Created CloudFormation templates for reproducible staging and production environments, standardizing deployment lifecycles.",
+        "Configured custom CloudWatch metrics, alarms, and X-Ray distributed tracing to improve Mean Time to Detect (MTTD) by 60%."
+      ],
+      "technologies": ["AWS", "Python", "FastAPI", "DynamoDB", "EventBridge", "SQS", "SNS", "CloudFormation", "Terraform"]
+    },
+    {
+      "id": "exp-3",
+      "company": "Aura Systems",
+      "role": "Associate Backend Engineer",
+      "location": "Denver, CO",
+      "startDate": "2018-08",
+      "endDate": "2020-05",
+      "current": false,
+      "summary": "Developed RESTful APIs and backend microservices in Python and Node.js.",
+      "achievements": [
+        "Developed and maintained 15+ REST endpoints with automated unit and integration test coverage exceeding 90%.",
+        "Built automated database backup and synchronization jobs using AWS Lambda and Amazon S3.",
+        "Collaborated with frontend teams to deliver high-performance user dashboards and authentication flows."
+      ],
+      "technologies": ["Python", "PostgreSQL", "AWS S3", "AWS Lambda", "Docker", "Git", "REST APIs"]
+    }
+  ],
+  "education": [
+    {
+      "id": "edu-1",
+      "institution": "University of California, Berkeley",
+      "degree": "Bachelor of Science in Computer Science",
+      "location": "Berkeley, CA",
+      "startDate": "2014-08",
+      "endDate": "2018-05",
+      "gpa": "3.85 / 4.0",
+      "honors": "Magna Cum Laude, Dean's Honors List",
+      "relevantCourses": [
+        "Distributed Systems",
+        "Operating Systems",
+        "Database Management Systems",
+        "Cloud Computing Architecture",
+        "Computer Networking & Security"
+      ]
+    }
+  ],
+  "skills": {
+    "cloudAndServerless": [
+      "AWS Lambda",
+      "Amazon API Gateway",
+      "Amazon DynamoDB",
+      "AWS SAM",
+      "AWS CloudFormation",
+      "Amazon S3",
+      "Amazon EventBridge",
+      "Amazon SQS & SNS",
+      "AWS IAM & Security",
+      "AWS CloudWatch & X-Ray"
+    ],
+    "programmingLanguages": [
+      "Python (3.9 - 3.12)",
+      "Node.js / TypeScript",
+      "SQL",
+      "Bash / Shell Scripting",
+      "PowerShell"
+    ],
+    "databasesAndStorage": [
+      "Amazon DynamoDB (Single-Table Design, GSI/LSI)",
+      "Amazon Aurora PostgreSQL",
+      "Redis / ElastiCache",
+      "Amazon S3"
+    ],
+    "devopsAndIaC": [
+      "AWS SAM (Serverless Application Model)",
+      "AWS CloudFormation",
+      "Terraform",
+      "Docker",
+      "GitHub Actions",
+      "AWS CodePipeline",
+      "CI/CD Pipelines"
+    ],
+    "architectureAndPatterns": [
+      "Serverless Architecture",
+      "RESTful API Design",
+      "Event-Driven Architecture",
+      "Microservices",
+      "API Security & Throttling",
+      "Clean Code & Unit Testing"
+    ]
+  },
+  "certifications": [
+    {
+      "name": "AWS Certified Solutions Architect – Associate",
+      "issuer": "Amazon Web Services",
+      "issued": "2023-04",
+      "credentialId": "AWS-PSA-9938102"
+    },
+    {
+      "name": "AWS Certified Developer – Associate",
+      "issuer": "Amazon Web Services",
+      "issued": "2022-09",
+      "credentialId": "AWS-CDA-7721590"
+    }
+  ],
+  "projects": [
+    {
+      "title": "Serverless Resume API",
+      "description": "Enterprise-grade serverless REST API on AWS serving dynamic resume data, protected by API Key authentication, throttled with custom Usage Plans, and backed by Amazon DynamoDB with automated CloudFormation/SAM IaC.",
+      "technologies": ["AWS API Gateway", "AWS Lambda", "Amazon DynamoDB", "AWS SAM", "Python 3.12"],
+      "link": "https://github.com/alex-mercer/serverless-resume-api"
+    },
+    {
+      "title": "Event-Driven Log Ingestion Pipeline",
+      "description": "High-throughput serverless log parsing engine processing streaming data via Kinesis and Lambda, storing structured records in DynamoDB.",
+      "technologies": ["AWS Kinesis", "AWS Lambda", "DynamoDB", "Terraform"],
+      "link": "https://github.com/alex-mercer/kinesis-log-processor"
+    }
+  ]
+}

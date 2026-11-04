@@ -1,0 +1,117 @@
+{
+  "ServerlessResumeTable": [
+    {
+      "PutRequest": {
+        "Item": {
+          "PK": {"S": "SECTION#personal"},
+          "SK": {"S": "DATA"},
+          "section": {"S": "personal"},
+          "data": {
+            "M": {
+              "name": {"S": "Alex Mercer"},
+              "title": {"S": "Senior Cloud & Serverless Software Engineer"},
+              "email": {"S": "alex.mercer@example.com"},
+              "phone": {"S": "+1 (555) 019-2834"},
+              "location": {"S": "San Francisco, CA, USA"},
+              "website": {"S": "https://alexmercer.dev"},
+              "linkedin": {"S": "https://linkedin.com/in/alex-mercer-cloud"},
+              "github": {"S": "https://github.com/alex-mercer"},
+              "summary": {"S": "Results-driven Cloud Engineer with 6+ years of experience designing and deploying scalable, secure, and cost-efficient serverless architectures on AWS."}
+            }
+          }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "PK": {"S": "SECTION#experience"},
+          "SK": {"S": "DATA"},
+          "section": {"S": "experience"},
+          "data": {
+            "L": [
+              {
+                "M": {
+                  "id": {"S": "exp-1"},
+                  "company": {"S": "CloudScale Solutions"},
+                  "role": {"S": "Senior Serverless Cloud Engineer"},
+                  "location": {"S": "San Francisco, CA"},
+                  "startDate": {"S": "2023-01"},
+                  "endDate": {"S": "Present"},
+                  "current": {"BOOL": true},
+                  "summary": {"S": "Lead architect for multi-tenant serverless APIs handling over 40M daily requests with 99.99% availability."}
+                }
+              },
+              {
+                "M": {
+                  "id": {"S": "exp-2"},
+                  "company": {"S": "Nexus FinTech Labs"},
+                  "role": {"S": "Cloud Software Engineer"},
+                  "location": {"S": "Austin, TX"},
+                  "startDate": {"S": "2020-06"},
+                  "endDate": {"S": "2022-12"},
+                  "current": {"BOOL": false},
+                  "summary": {"S": "Designed event-driven backend services and transaction pipelines complying with PCI-DSS standards."}
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "PK": {"S": "SECTION#education"},
+          "SK": {"S": "DATA"},
+          "section": {"S": "education"},
+          "data": {
+            "L": [
+              {
+                "M": {
+                  "id": {"S": "edu-1"},
+                  "institution": {"S": "University of California, Berkeley"},
+                  "degree": {"S": "Bachelor of Science in Computer Science"},
+                  "location": {"S": "Berkeley, CA"},
+                  "startDate": {"S": "2014-08"},
+                  "endDate": {"S": "2018-05"},
+                  "gpa": {"S": "3.85 / 4.0"},
+                  "honors": {"S": "Magna Cum Laude, Dean's Honors List"}
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "PK": {"S": "SECTION#skills"},
+          "SK": {"S": "DATA"},
+          "section": {"S": "skills"},
+          "data": {
+            "M": {
+              "cloudAndServerless": {
+                "L": [
+                  {"S": "AWS Lambda"},
+                  {"S": "Amazon API Gateway"},
+                  {"S": "Amazon DynamoDB"},
+                  {"S": "AWS SAM"},
+                  {"S": "AWS CloudFormation"}
+                ]
+              },
+              "programmingLanguages": {
+                "L": [
+                  {"S": "Python"},
+                  {"S": "Node.js / TypeScript"},
+                  {"S": "SQL"}
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
