@@ -9,8 +9,15 @@ and Sort Key (SK).
 import os
 import logging
 from typing import Any, Dict, List, Optional
-import boto3
-from botocore.exceptions import ClientError
+
+try:
+    import boto3
+    from botocore.exceptions import ClientError
+    BOTO3_AVAILABLE = True
+except ImportError:
+    boto3 = None
+    ClientError = Exception
+    BOTO3_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -25,6 +32,8 @@ _dynamodb_resource = None
 def get_dynamodb_resource():
     """Lazy initialize the boto3 DynamoDB resource."""
     global _dynamodb_resource
+    if not BOTO3_AVAILABLE:
+        raise RuntimeError("boto3 is not installed.")
     if _dynamodb_resource is None:
         _dynamodb_resource = boto3.resource("dynamodb", region_name=AWS_REGION)
     return _dynamodb_resource
